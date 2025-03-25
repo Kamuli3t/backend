@@ -7,7 +7,7 @@ const apiKey = process.env.GOOGLE_BOOKS_API_KEY;
 async function fetchBookData(bookId, apiKey) {
   try {
     const response = await axios.get(
-      `https://www.googleapis.com/books/v1/volumes/<span class="math-inline">\{bookId\}?key\=</span>{apiKey}`
+      `https://www.googleapis.com/books/v1/volumes/?q=${bookId}key=${apiKey}`
     );
     return response.data.volumeInfo;
   } catch (error) {
