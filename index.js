@@ -21,7 +21,7 @@ await mongoose
   .then(() => console.log("Connected to MongoDB"))
   .catch((e) => console.error(e));
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT;
 
 const app = express();
 

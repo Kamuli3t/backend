@@ -10,7 +10,12 @@ adminRouter.post("/register", async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    // Check if admin with the same username already exists
+    if (!username || !password) {
+      return res
+        .status(400)
+        .json({ message: "Username and password are required" });
+    }
+
     const existingAdmin = await Admin.findOne({ username });
     if (existingAdmin) {
       return res
@@ -18,10 +23,11 @@ adminRouter.post("/register", async (req, res) => {
         .json({ message: "Admin with this username already exists" });
     }
 
-    // Create a new admin
+    const hashedPassword = bcrypt.hash(password, 10);
+
     const newAdmin = new Admin({
       username,
-      password,
+      password: hashedPassword,
     });
 
     await newAdmin.save();
@@ -33,19 +39,31 @@ adminRouter.post("/register", async (req, res) => {
   }
 });
 
+// Admin Login Route
 adminRouter.post("/login", async (req, res) => {
   try {
-    const admin = await Admin.findOne({ username: req.body.username });
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+      return res
+        .status(400)
+        .json({ message: "Username and password are required" });
+    }
+
+    const admin = await Admin.findOne({ username });
     if (!admin) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
-    const isMatch = await bcrypt.compare(req.body.password, admin.password);
+
+    const isMatch = bcrypt.compare(password, admin.password);
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
+
     const token = jwt.sign({ id: admin._id }, process.env.JWT_SECRET, {
       expiresIn: "1d",
     });
+
     res.json({ token });
   } catch (error) {
     res.status(500).json({ message: error.message });

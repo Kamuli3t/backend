@@ -12,9 +12,9 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.get("/:id", async (req, res) => {
+router.get("/:bookId", async (req, res) => {
   try {
-    const bookReview = await BookReview.findById(req.params.id);
+    const bookReview = await BookReview.findById(req.params.bookId);
     if (!bookReview) {
       return res.status(404).json({ message: "Book review not found" });
     }
@@ -26,8 +26,6 @@ router.get("/:id", async (req, res) => {
 
 router.post("/", authenticateAdmin, async (req, res) => {
   try {
-    // I decided to move the fetchBookData function to the frontend and pass the book data to the backend.
-    // const bookData = await fetchBookData(req.body.bookId, apiKey); // move to frontend
     const bookData = req.body.bookData;
 
     if (!bookData) {
@@ -37,10 +35,13 @@ router.post("/", authenticateAdmin, async (req, res) => {
     const bookReview = new BookReview({
       bookId: req.body.bookId,
       title: bookData.title,
+      subTitle: bookData.subTitle || "N/A",
       authors: bookData.authors || "N/A",
-      thumbnail: bookData.imageLinks?.thumbnail,
-      genres: bookData.categories || "N/A",
-      descriptionShort: req.body.descriptionShort,
+      thumbnail: bookData?.imageLinks?.thumbnail || bookData?.thumbnail,
+      genres: Array.isArray(bookData.categories)
+        ? bookData.categories.join(", ")
+        : "N/A",
+      descriptionShort: bookData.description || req.body.descriptionShort,
       howChangedMe: req.body.howChangedMe,
       whoShouldRead: req.body.whoShouldRead,
       impressions: req.body.impressions,
@@ -51,6 +52,29 @@ router.post("/", authenticateAdmin, async (req, res) => {
     res.status(201).json(newBookReview);
   } catch (err) {
     res.status(400).json({ message: err.message });
+  }
+});
+
+router.put("/:id", authenticateAdmin, async (req, res) => {
+  try {
+    const review = await BookReview.findById(req.params.id);
+    if (!review) return res.status(404).json({ message: "Review not found" });
+
+    const fields = [
+      "descriptionShort",
+      "howChangedMe",
+      "whoShouldRead",
+      "impressions",
+      "rating",
+    ];
+    fields.forEach((field) => {
+      if (req.body[field] !== undefined) review[field] = req.body[field];
+    });
+
+    const updated = await review.save();
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
 

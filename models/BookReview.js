@@ -10,7 +10,11 @@ const bookReviewSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  authors: [{ type: String }],
+  subTitle: {
+    type: String,
+    required: true,
+  },
+  authors: [{ type: String, required: true }],
   thumbnail: {
     type: String,
   },
